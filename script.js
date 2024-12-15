@@ -11,8 +11,8 @@ function saveTasks() {
     const tasks = [];
     taskList.querySelectorAll('li').forEach(item => {
         tasks.push({
-            text: item.firstChild.textContent,
-            completed: item.classList.contains('completed'),
+            text: item.querySelector('label').textContent,
+            completed: item.querySelector('input[type=\"checkbox\"]').checked,
         });
     });
     localStorage.setItem('tasks', JSON.stringify(tasks));
@@ -22,7 +22,7 @@ function saveTasks() {
 function loadTasks() {
     const savedTasks = localStorage.getItem('tasks');
     if (savedTasks) {
-        JSON.parse(savedTasks).forEach(task => { //при помощи parse json снова в массив
+        JSON.parse(savedTasks).forEach(task => {
             createTask(task.text, task.completed);
         });
     }
@@ -31,33 +31,33 @@ function loadTasks() {
 // создание новой задачи
 function createTask(taskText, completed = false) {
     const listItem = document.createElement('li');
-    listItem.textContent = taskText;
+
+    // чекбокс
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = completed;
+    checkbox.addEventListener('change', () => {
+        saveTasks();
+    });
+
+    // текст задачи
+    const label = document.createElement('label');
+    label.textContent = taskText;
 
     // кнопка "Удалить"
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = 'Удалить';
     deleteBtn.addEventListener('click', () => {
         taskList.removeChild(listItem);
-        saveTasks(); 
+        saveTasks();
     });
 
-    // отметить выполненные задачи
-    listItem.addEventListener('click', () => {
-        listItem.classList.toggle('completed'); //переключение статуса задачи
-        saveTasks(); 
-    });
-
-    // добавить класс completed, если задача уже выполнена
-    if (completed) {
-        listItem.classList.add('completed');
-    }
-
-    // добавить кнопку удалить
+    // сборка элемента
+    listItem.appendChild(checkbox);
+    listItem.appendChild(label);
     listItem.appendChild(deleteBtn);
 
-    // добавить новый элемент списка (li) в список задач (ul)
     taskList.appendChild(listItem);
-
     saveTasks();
 }
 
@@ -65,15 +65,16 @@ function createTask(taskText, completed = false) {
 function applyFilter(filter) {
     const tasks = taskList.querySelectorAll('li');
     tasks.forEach(task => {
+        const checkbox = task.querySelector('input[type=\"checkbox\"]');
         switch (filter) {
             case 'all':
                 task.style.display = 'flex';
                 break;
             case 'completed':
-                task.style.display = task.classList.contains('completed') ? 'flex' : 'none';
+                task.style.display = checkbox.checked ? 'flex' : 'none';
                 break;
             case 'uncompleted':
-                task.style.display = !task.classList.contains('completed') ? 'flex' : 'none';
+                task.style.display = !checkbox.checked ? 'flex' : 'none';
                 break;
         }
     });
@@ -107,11 +108,11 @@ addTaskBtn.addEventListener('click', () => {
     if (taskText === '') return;
 
     createTask(taskText);
-    taskInput.value = ''; // очистить ввод
+    taskInput.value = '';
 });
 
 // задачи загружаются при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     loadTasks();
-    applyFilter('all'); // все задачи после загрузки
+    applyFilter('all');
 });
